@@ -1,30 +1,56 @@
 import { HandLandmarker, FilesetResolver } from '@mediapipe/tasks-vision'
 
-// Palm landmarks used to compute center (wrist + base of each finger)
-const PALM_INDICES = [0, 5, 9, 13, 17]
-
-// How long the palm must stay still before placement confirms (ms)
-const CONFIRM_DURATION = 1500
-
-// Max normalized movement allowed while holding (0–1 coords)
+const PALM_INDICES        = [0, 5, 9, 13, 17]
+const CONFIRM_DURATION    = 1500
 const STABILITY_THRESHOLD = 0.04
+
+function dist2D(a, b) {
+  return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
+}
+
+function isExtended(lm, tipIdx, mcpIdx) {
+  return lm[tipIdx].y < lm[mcpIdx].y
+}
+
+function classifyGesture(lm) {
+  const indexUp  = isExtended(lm, 8, 5)
+  const middleUp = isExtended(lm, 12, 9)
+  const ringUp   = isExtended(lm, 16, 13)
+  const pinkyUp  = isExtended(lm, 20, 17)
+
+  // Water: OK ring — thumb + index tips close, at least one other finger extended
+  if (dist2D(lm[4], lm[8]) < 0.07 && (middleUp || ringUp || pinkyUp)) return 'water'
+
+  // Earth: closed fist — no fingers extended
+  if (!indexUp && !middleUp && !ringUp && !pinkyUp) return 'earth'
+
+  // Fire: only index extended
+  if (indexUp && !middleUp && !ringUp && !pinkyUp) return 'fire'
+
+  // Metal: index + middle extended, ring + pinky curled
+  if (indexUp && middleUp && !ringUp && !pinkyUp) return 'metal'
+
+  // Wood: all four extended and spread wide
+  if (indexUp && middleUp && ringUp && pinkyUp && dist2D(lm[8], lm[20]) > 0.2) return 'wood'
+
+  return null
+}
 
 export class HandTracker extends EventTarget {
   constructor() {
     super()
-    this._landmarker = null
-    this._running = false
-
-    // Confirmation state
-    this._holdStart = null
-    this._lastPalm = null
+    this._landmarker    = null
+    this._running       = false
+    this._holdStart     = null
+    this._lastPalm      = null
+    this._lastGesture   = null
+    this._cooldownUntil = 0
   }
 
   async init() {
     const vision = await FilesetResolver.forVisionTasks(
       'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm'
     )
-
     this._landmarker = await HandLandmarker.createFromOptions(vision, {
       baseOptions: {
         modelAssetPath:
@@ -36,31 +62,49 @@ export class HandTracker extends EventTarget {
     })
   }
 
-  // Call every frame with the video element and current timestamp (ms)
   detect(video, nowMs) {
     if (!this._landmarker || !this._running) return
+    if (nowMs < this._cooldownUntil) return
 
     const result = this._landmarker.detectForVideo(video, nowMs)
     if (!result.landmarks || result.landmarks.length === 0) {
-      this._holdStart = null
-      this._lastPalm = null
+      this._holdStart   = null
+      this._lastPalm    = null
+      this._lastGesture = null
       this.dispatchEvent(new CustomEvent('hand-lost'))
       return
     }
 
-    const palm = this._palmCenter(result.landmarks[0])
-    this.dispatchEvent(new CustomEvent('hand-detected', { detail: palm }))
+    const lm      = result.landmarks[0]
+    const palm    = this._palmCenter(lm)
+    const gesture = classifyGesture(lm)
 
-    // Stability check for placement confirmation
+    this.dispatchEvent(new CustomEvent('hand-detected', { detail: { palm, element: gesture } }))
+
+    // Reset hold timer if gesture changed
+    if (gesture !== this._lastGesture) {
+      this._holdStart   = null
+      this._lastGesture = gesture
+    }
+
+    if (!gesture) {
+      this._holdStart = null
+      this._lastPalm  = null
+      return
+    }
+
     if (this._lastPalm && this._isStable(palm, this._lastPalm)) {
       if (!this._holdStart) this._holdStart = performance.now()
-      const elapsed = performance.now() - this._holdStart
+      const elapsed  = performance.now() - this._holdStart
       const progress = Math.min(elapsed / CONFIRM_DURATION, 1)
-      this.dispatchEvent(new CustomEvent('hold-progress', { detail: { progress, palm } }))
+      this.dispatchEvent(new CustomEvent('hold-progress', { detail: { progress, palm, element: gesture } }))
 
       if (elapsed >= CONFIRM_DURATION) {
-        this._running = false   // stop tracking after placement
-        this.dispatchEvent(new CustomEvent('placement-confirmed', { detail: palm }))
+        this._holdStart     = null
+        this._lastPalm      = null
+        this._lastGesture   = null
+        this._cooldownUntil = performance.now() + 500
+        this.dispatchEvent(new CustomEvent('gesture-confirmed', { detail: { element: gesture, palm } }))
       }
     } else {
       this._holdStart = null
@@ -80,7 +124,6 @@ export class HandTracker extends EventTarget {
       z += landmarks[i].z
     }
     const n = PALM_INDICES.length
-    // MediaPipe gives 0–1 normalized coords, x flipped for front camera
     return { x: x / n, y: y / n, z: z / n }
   }
 

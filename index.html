@@ -29,7 +29,56 @@
       z-index: 0;
     }
 
-    /* ── start screen ── */
+    /* ── guide screen ── */
+    #guide-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 11;
+      background: rgba(0, 0, 0, 0.88);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 52px;
+      transition: opacity 0.8s ease;
+    }
+    #guide-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #gesture-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .gesture-row {
+      display: flex;
+      align-items: baseline;
+      gap: 28px;
+    }
+    .g-element {
+      font-size: 0.78rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      min-width: 90px;
+      text-align: right;
+    }
+    .g-desc {
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      opacity: 0.45;
+      min-width: 100px;
+    }
+
+    #guide-hint {
+      font-size: 0.58rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      opacity: 0.28;
+    }
+
+    /* ── orb screen ── */
     #start-screen {
       position: fixed;
       inset: 0;
@@ -37,7 +86,6 @@
       background: rgba(0, 0, 0, 0.72);
     }
 
-    /* ── instruction ── */
     #instruction {
       position: absolute;
       top: 44px;
@@ -46,12 +94,10 @@
       font-size: 0.62rem;
       letter-spacing: 0.3em;
       text-transform: uppercase;
-      opacity: 0.38;
+      opacity: 0.35;
       pointer-events: none;
       white-space: nowrap;
-      transition: opacity 0.9s ease;
     }
-    #instruction.hidden { opacity: 0; }
 
     /* ── orb stage ── */
     #orb-stage {
@@ -98,7 +144,6 @@
       62%       { transform: translate(-50%, -50%) translate( -6px,   6px); }
     }
 
-    /* ── ambient orb ── */
     @keyframes orb-pulse {
       0%, 100% { opacity: 0.82; }
       50%       { opacity: 1.00; }
@@ -113,12 +158,11 @@
       align-items: center;
       justify-content: center;
       animation: orb-pulse 3.5s ease-in-out infinite;
-      transition: transform 0.25s ease, filter 0.25s ease, opacity 0.5s ease;
+      transition: transform 0.2s ease, filter 0.2s ease;
       pointer-events: all;
     }
-    .el-circle:hover  { transform: scale(1.18); filter: brightness(1.25); }
-    .el-circle.active { transform: scale(1.45); filter: brightness(1.6); animation-play-state: paused; }
-    .el-circle.dimmed { opacity: 0.25; }
+    .el-circle:hover  { transform: scale(1.14); filter: brightness(1.25); }
+    .el-circle.active { transform: scale(1.4);  filter: brightness(1.7);  animation-play-state: paused; }
 
     .el-fire  { animation-delay: -0.6s; }
     .el-earth { animation-delay: -1.2s; }
@@ -190,22 +234,6 @@
         0 0 90px 45px rgba(0,102,255,0.14);
     }
 
-    .orb-label {
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      margin-top: 10px;
-      font-size: 0.66rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      white-space: nowrap;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.35s ease;
-    }
-    .orb-float.is-active .orb-label { opacity: 0.62; }
-
     /* ── HUD ── */
     #hud {
       position: fixed;
@@ -274,33 +302,53 @@
   <video id="camera-feed" playsinline autoplay muted></video>
   <canvas id="canvas"></canvas>
 
+  <!-- Screen 1: gesture guide -->
+  <div id="guide-screen">
+    <div id="gesture-list">
+      <div class="gesture-row">
+        <span class="g-element" style="color:#00cc44">Wood 목</span>
+        <span class="g-desc">open palm</span>
+      </div>
+      <div class="gesture-row">
+        <span class="g-element" style="color:#ff2200">Fire 화</span>
+        <span class="g-desc">point up</span>
+      </div>
+      <div class="gesture-row">
+        <span class="g-element" style="color:#ffcc00">Earth 토</span>
+        <span class="g-desc">closed fist</span>
+      </div>
+      <div class="gesture-row">
+        <span class="g-element" style="color:#cccccc">Metal 금</span>
+        <span class="g-desc">peace sign</span>
+      </div>
+      <div class="gesture-row">
+        <span class="g-element" style="color:#0066ff">Water 수</span>
+        <span class="g-desc">ok ring</span>
+      </div>
+    </div>
+    <p id="guide-hint">tap to continue</p>
+  </div>
+
+  <!-- Screen 2: orb selection -->
   <div id="start-screen">
-
     <p id="instruction">tap your element</p>
-
     <div id="orb-stage">
       <div class="orb-float float-water">
         <div class="el-circle el-water" data-element="water"><span>↑</span></div>
-        <p class="orb-label">👌 Water 수</p>
       </div>
       <div class="orb-float float-metal">
         <div class="el-circle el-metal" data-element="metal"><span>←</span></div>
-        <p class="orb-label">✌️ Metal 금</p>
       </div>
       <div class="orb-float float-earth">
         <div class="el-circle el-earth" data-element="earth"><span>⊕</span></div>
-        <p class="orb-label">✊ Earth 토</p>
       </div>
       <div class="orb-float float-wood">
         <div class="el-circle el-wood" data-element="wood"><span>→</span></div>
-        <p class="orb-label">✋ Wood 목</p>
       </div>
       <div class="orb-float float-fire">
         <div class="el-circle el-fire" data-element="fire"><span>↓</span></div>
-        <p class="orb-label">☝️ Fire 화</p>
       </div>
     </div>
-
   </div>
 
   <div id="hud">

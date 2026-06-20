@@ -85,33 +85,18 @@ const ELEMENT_INFO = {
   water: { label: 'Water 수', emoji: '👌', color: '#0066ff' },
 }
 
-const instruction = document.getElementById('instruction')
-let arStarted     = false
+let arStarted = false
 
-const ELEMENT_SYMBOL = { water: '↑', metal: '←', earth: '⊕', wood: '→', fire: '↓' }
+// ── Guide screen → orb screen ─────────────────────────────────
+const guideScreen = document.getElementById('guide-screen')
+guideScreen.addEventListener('click', () => {
+  guideScreen.classList.add('hidden')
+})
 
 // ── Orb click ─────────────────────────────────────────────────
 document.querySelectorAll('.el-circle').forEach((el) => {
   el.addEventListener('click', () => {
-    const element = el.dataset.element
-
-    if (el.classList.contains('active')) {
-      if (!arStarted) { arStarted = true; startAR() }
-      return
-    }
-
-    document.querySelectorAll('.el-circle').forEach(c => {
-      c.classList.remove('active')
-      c.classList.add('dimmed')
-      c.querySelector('span').textContent = ELEMENT_SYMBOL[c.dataset.element]
-    })
-    document.querySelectorAll('.orb-float').forEach(f => f.classList.remove('is-active'))
-
-    el.classList.remove('dimmed')
-    el.classList.add('active')
-    el.querySelector('span').textContent = ELEMENT_INFO[element].emoji
-    el.closest('.orb-float').classList.add('is-active')
-    instruction.classList.add('hidden')
+    if (!arStarted) { arStarted = true; startAR() }
   })
 })
 
@@ -251,7 +236,6 @@ let exploreStarted = false
 
 // ── Start AR ──────────────────────────────────────────────────
 async function startAR() {
-  stopDrift()
   introActive = false
   document.getElementById('start-screen').style.display = 'none'
   hud.style.display = 'block'
