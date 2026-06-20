@@ -14,7 +14,7 @@
       color: #fff;
     }
 
-    canvas {
+    #canvas {
       position: fixed;
       inset: 0;
       z-index: 1;
@@ -34,46 +34,241 @@
       position: fixed;
       inset: 0;
       z-index: 10;
+      background: rgba(0, 0, 0, 0.72);
+    }
+
+    /* ── instruction ── */
+    #instruction {
+      position: absolute;
+      top: 44px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.62rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      opacity: 0.38;
+      pointer-events: none;
+      white-space: nowrap;
+      transition: opacity 0.9s ease;
+    }
+    #instruction.hidden { opacity: 0; }
+
+    /* ── orb stage ── */
+    #orb-stage {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .orb-float {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .float-water { left: 50%;  top: 16%; animation: drift-water 11s ease-in-out infinite; }
+    .float-metal { left: 17%;  top: 50%; animation: drift-metal 13s ease-in-out infinite; }
+    .float-earth { left: 50%;  top: 53%; animation: drift-earth  9s ease-in-out infinite; }
+    .float-wood  { left: 83%;  top: 50%; animation: drift-wood  12s ease-in-out infinite; }
+    .float-fire  { left: 50%;  top: 77%; animation: drift-fire  10s ease-in-out infinite; }
+
+    @keyframes drift-water {
+      0%, 100% { transform: translate(-50%, -50%) translate(  0px,   0px); }
+      30%       { transform: translate(-50%, -50%) translate( -6px, -10px); }
+      68%       { transform: translate(-50%, -50%) translate(  5px,   6px); }
+    }
+    @keyframes drift-metal {
+      0%, 100% { transform: translate(-50%, -50%) translate(  0px,  0px); }
+      38%       { transform: translate(-50%, -50%) translate(  9px, -7px); }
+      72%       { transform: translate(-50%, -50%) translate( -5px,  9px); }
+    }
+    @keyframes drift-earth {
+      0%, 100% { transform: translate(-50%, -50%) translate(  0px,  0px); }
+      33%       { transform: translate(-50%, -50%) translate( -5px,  7px); }
+      66%       { transform: translate(-50%, -50%) translate(  6px, -5px); }
+    }
+    @keyframes drift-wood {
+      0%, 100% { transform: translate(-50%, -50%) translate(  0px,  0px); }
+      42%       { transform: translate(-50%, -50%) translate( -8px, -7px); }
+      78%       { transform: translate(-50%, -50%) translate(  5px,  8px); }
+    }
+    @keyframes drift-fire {
+      0%, 100% { transform: translate(-50%, -50%) translate(  0px,   0px); }
+      27%       { transform: translate(-50%, -50%) translate(  6px, -10px); }
+      62%       { transform: translate(-50%, -50%) translate( -6px,   6px); }
+    }
+
+    /* ── ambient orb ── */
+    @keyframes orb-pulse {
+      0%, 100% { opacity: 0.82; }
+      50%       { opacity: 1.00; }
+    }
+
+    .el-circle {
+      width: min(72px, 21vw);
+      height: min(72px, 21vw);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: orb-pulse 3.5s ease-in-out infinite;
+      transition: transform 0.25s ease, filter 0.25s ease, opacity 0.5s ease;
+      pointer-events: all;
+    }
+    .el-circle:hover  { transform: scale(1.18); filter: brightness(1.25); }
+    .el-circle.active { transform: scale(1.14); filter: brightness(1.55); animation-play-state: paused; }
+    .el-circle.dimmed { opacity: 0.25; }
+
+    .el-fire  { animation-delay: -0.6s; }
+    .el-earth { animation-delay: -1.2s; }
+    .el-metal { animation-delay: -1.8s; }
+    .el-water { animation-delay: -2.4s; }
+
+    .el-circle span {
+      font-size: min(1.3rem, 4.5vw);
+      font-weight: 100;
+      color: rgba(255,255,255,0.70);
+      line-height: 1;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .el-wood {
+      background: radial-gradient(circle at 50% 45%,
+        rgba(255,255,255,1.00)  0%, rgba(120,255,150,0.92) 16%,
+        rgba(0,204,68,0.68)    40%, rgba(0,204,68,0.08)    65%,
+        rgba(0,204,68,0)       78%);
+      box-shadow:
+        0 0 8px  4px  rgba(0,204,68,1.00),
+        0 0 22px 11px rgba(0,204,68,0.68),
+        0 0 50px 25px rgba(0,204,68,0.38),
+        0 0 90px 45px rgba(0,204,68,0.14);
+    }
+    .el-fire {
+      background: radial-gradient(circle at 50% 45%,
+        rgba(255,255,255,1.00)  0%, rgba(255,140,90,0.92)  16%,
+        rgba(255,34,0,0.68)    40%, rgba(255,34,0,0.08)    65%,
+        rgba(255,34,0,0)       78%);
+      box-shadow:
+        0 0 8px  4px  rgba(255,34,0,1.00),
+        0 0 22px 11px rgba(255,34,0,0.68),
+        0 0 50px 25px rgba(255,34,0,0.38),
+        0 0 90px 45px rgba(255,34,0,0.14);
+    }
+    .el-earth {
+      background: radial-gradient(circle at 50% 45%,
+        rgba(255,255,255,1.00)  0%, rgba(255,245,100,0.92) 16%,
+        rgba(255,204,0,0.68)   40%, rgba(255,204,0,0.08)   65%,
+        rgba(255,204,0,0)      78%);
+      box-shadow:
+        0 0 8px  4px  rgba(255,204,0,1.00),
+        0 0 22px 11px rgba(255,204,0,0.68),
+        0 0 50px 25px rgba(255,204,0,0.38),
+        0 0 90px 45px rgba(255,204,0,0.14);
+    }
+    .el-metal {
+      background: radial-gradient(circle at 50% 45%,
+        rgba(255,255,255,1.00)  0%, rgba(220,220,220,0.92) 16%,
+        rgba(180,180,180,0.68) 40%, rgba(180,180,180,0.08) 65%,
+        rgba(180,180,180,0)    78%);
+      box-shadow:
+        0 0 8px  4px  rgba(200,200,200,1.00),
+        0 0 22px 11px rgba(200,200,200,0.68),
+        0 0 50px 25px rgba(200,200,200,0.38),
+        0 0 90px 45px rgba(200,200,200,0.14);
+    }
+    .el-water {
+      background: radial-gradient(circle at 50% 45%,
+        rgba(255,255,255,1.00)  0%, rgba(90,168,255,0.92)  16%,
+        rgba(0,102,255,0.68)   40%, rgba(0,102,255,0.08)   65%,
+        rgba(0,102,255,0)      78%);
+      box-shadow:
+        0 0 8px  4px  rgba(0,102,255,1.00),
+        0 0 22px 11px rgba(0,102,255,0.68),
+        0 0 50px 25px rgba(0,102,255,0.38),
+        0 0 90px 45px rgba(0,102,255,0.14);
+    }
+
+    /* ── gesture display ── */
+    #gesture-display {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 24px;
-      background: rgba(0, 0, 0, 0.85);
-      padding: 32px;
-      text-align: center;
+      gap: 14px;
+      padding-bottom: 52px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.7s ease;
+    }
+    #gesture-display.visible {
+      opacity: 1;
+      pointer-events: all;
     }
 
-    #start-screen h1 {
-      font-size: clamp(1.4rem, 5vw, 2rem);
-      font-weight: 300;
-      letter-spacing: 0.15em;
+    #gesture-canvas {
+      display: block;
+      width: min(150px, 40vw);
+      height: auto;
+      pointer-events: none;
+    }
+
+    #gesture-label {
+      font-size: 0.66rem;
+      letter-spacing: 0.26em;
       text-transform: uppercase;
+      opacity: 0.48;
+      pointer-events: none;
     }
 
-    #start-screen p {
-      font-size: 0.95rem;
-      opacity: 0.6;
-      max-width: 280px;
-      line-height: 1.6;
-    }
-
-    #start-btn {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.4);
-      color: #fff;
-      padding: 14px 40px;
-      font-size: 0.9rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
+    #hold-zone {
+      position: relative;
+      width: 72px;
+      height: 72px;
       cursor: pointer;
-      border-radius: 2px;
-      transition: background 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
 
-    #start-btn:hover { background: rgba(255,255,255,0.1); }
+    #land-ring {
+      width: 72px;
+      height: 72px;
+      display: block;
+      transform: rotate(-90deg);
+    }
+    #land-ring .lr-track {
+      fill: none;
+      stroke: rgba(255,255,255,0.12);
+      stroke-width: 2;
+    }
+    #land-ring .lr-progress {
+      fill: none;
+      stroke: #fff;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-dasharray: 188.5;
+      stroke-dashoffset: 188.5;
+      transition: stroke-dashoffset 0.05s linear;
+    }
 
-    /* ── HUD shown after start ── */
+    #hold-hint {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.56rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      opacity: 0.38;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    /* ── HUD ── */
     #hud {
       position: fixed;
       inset: 0;
@@ -94,7 +289,6 @@
       white-space: nowrap;
     }
 
-    /* ── palm ring: appears at palm position ── */
     #palm-ring {
       position: absolute;
       width: 80px;
@@ -143,17 +337,47 @@
   <canvas id="canvas"></canvas>
 
   <div id="start-screen">
-    <h1>Uncanny Grove</h1>
-    <p>Hold your open palm toward the camera to summon the grove.</p>
-    <button id="start-btn">Enter</button>
+
+    <p id="instruction">choose your element</p>
+
+    <div id="orb-stage">
+      <div class="orb-float float-water">
+        <div class="el-circle el-water" data-element="water"><span>↑</span></div>
+      </div>
+      <div class="orb-float float-metal">
+        <div class="el-circle el-metal" data-element="metal"><span>←</span></div>
+      </div>
+      <div class="orb-float float-earth">
+        <div class="el-circle el-earth" data-element="earth"><span>⊕</span></div>
+      </div>
+      <div class="orb-float float-wood">
+        <div class="el-circle el-wood" data-element="wood"><span>→</span></div>
+      </div>
+      <div class="orb-float float-fire">
+        <div class="el-circle el-fire" data-element="fire"><span>↓</span></div>
+      </div>
+    </div>
+
+    <div id="gesture-display">
+      <canvas id="gesture-canvas" width="100" height="120"></canvas>
+      <p id="gesture-label"></p>
+      <div id="hold-zone">
+        <svg id="land-ring" viewBox="0 0 72 72">
+          <circle class="lr-track"    cx="36" cy="36" r="30"/>
+          <circle class="lr-progress" cx="36" cy="36" r="30"/>
+        </svg>
+        <span id="hold-hint">hold</span>
+      </div>
+    </div>
+
   </div>
 
   <div id="hud">
-    <div id="status">Searching for hand...</div>
-    <div id="hint">Show your open palm</div>
+    <div id="status"></div>
+    <div id="hint">Show a gesture</div>
     <div id="palm-ring">
       <svg viewBox="0 0 80 80">
-        <circle class="track" cx="40" cy="40" r="35" />
+        <circle class="track"    cx="40" cy="40" r="35" />
         <circle class="progress" cx="40" cy="40" r="35" />
       </svg>
     </div>
