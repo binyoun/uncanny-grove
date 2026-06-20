@@ -85,77 +85,34 @@ const ELEMENT_INFO = {
   water: { label: 'Water 수', emoji: '👌', color: '#0066ff' },
 }
 
-// ── Gesture SVG outlines ──────────────────────────────────────
-const GESTURE_SVG = {
-  earth: `<svg viewBox="0 0 56 72" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="8" y="24" width="40" height="40" rx="9"/>
-    <path d="M8,38 C3,30 5,20 13,17 Q18,15 20,21"/>
-    <line x1="20" y1="24" x2="20" y2="29"/>
-    <line x1="29" y1="24" x2="29" y2="29"/>
-    <line x1="38" y1="24" x2="38" y2="29"/>
-  </svg>`,
-  fire: `<svg viewBox="0 0 56 72" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="8" y="40" width="40" height="28" rx="9"/>
-    <rect x="20" y="6" width="16" height="40" rx="8"/>
-    <path d="M13,40 Q13,35 18,34"/>
-    <path d="M43,40 Q43,35 38,34"/>
-  </svg>`,
-  wood: `<svg viewBox="0 0 56 72" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="6" y="50" width="44" height="18" rx="7"/>
-    <rect x="2"  y="38" width="10" height="20" rx="5"/>
-    <rect x="12" y="8"  width="9"  height="46" rx="4.5"/>
-    <rect x="22" y="2"  width="9"  height="52" rx="4.5"/>
-    <rect x="32" y="6"  width="9"  height="48" rx="4.5"/>
-    <rect x="42" y="14" width="8"  height="40" rx="4"/>
-  </svg>`,
-  metal: `<svg viewBox="0 0 56 72" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="8" y="42" width="40" height="26" rx="9"/>
-    <path d="M34,42 Q40,36 44,42"/>
-    <rect x="10" y="6"  width="14" height="42" rx="7"/>
-    <rect x="32" y="4"  width="14" height="44" rx="7"/>
-  </svg>`,
-  water: `<svg viewBox="0 0 56 72" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="20" cy="50" r="14"/>
-    <rect x="34" y="8"  width="10" height="42" rx="5"/>
-    <rect x="45" y="12" width="9"  height="38" rx="4.5"/>
-    <path d="M8,50 Q8,66 20,68 L46,68"/>
-  </svg>`,
-}
-
-const gDisplay    = document.getElementById('gesture-display')
-const gSvgWrap    = document.getElementById('gesture-svg')
-const gLabel      = document.getElementById('gesture-label')
 const instruction = document.getElementById('instruction')
-let activeElement = null
 let arStarted     = false
 
-// ── Orb click → show gesture ──────────────────────────────────
+const ELEMENT_SYMBOL = { water: '↑', metal: '←', earth: '⊕', wood: '→', fire: '↓' }
+
+// ── Orb click ─────────────────────────────────────────────────
 document.querySelectorAll('.el-circle').forEach((el) => {
   el.addEventListener('click', () => {
     const element = el.dataset.element
-    activeElement = element
+
+    if (el.classList.contains('active')) {
+      if (!arStarted) { arStarted = true; startAR() }
+      return
+    }
 
     document.querySelectorAll('.el-circle').forEach(c => {
       c.classList.remove('active')
       c.classList.add('dimmed')
+      c.querySelector('span').textContent = ELEMENT_SYMBOL[c.dataset.element]
     })
+    document.querySelectorAll('.orb-float').forEach(f => f.classList.remove('is-active'))
+
     el.classList.remove('dimmed')
     el.classList.add('active')
-
+    el.querySelector('span').textContent = ELEMENT_INFO[element].emoji
+    el.closest('.orb-float').classList.add('is-active')
     instruction.classList.add('hidden')
-    gSvgWrap.innerHTML = GESTURE_SVG[element]
-    gSvgWrap.querySelector('svg').style.color = ELEMENT_INFO[element].color
-    gLabel.textContent = ELEMENT_INFO[element].label
-    gDisplay.classList.add('visible')
   })
-})
-
-// ── Tap anywhere (not orb) → enter AR ────────────────────────
-document.getElementById('start-screen').addEventListener('click', (e) => {
-  if (!activeElement || arStarted) return
-  if (e.target.closest('.el-circle')) return
-  arStarted = true
-  startAR()
 })
 
 // ── AR modules ────────────────────────────────────────────────

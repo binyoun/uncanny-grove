@@ -117,7 +117,7 @@
       pointer-events: all;
     }
     .el-circle:hover  { transform: scale(1.18); filter: brightness(1.25); }
-    .el-circle.active { transform: scale(1.14); filter: brightness(1.55); animation-play-state: paused; }
+    .el-circle.active { transform: scale(1.45); filter: brightness(1.6); animation-play-state: paused; }
     .el-circle.dimmed { opacity: 0.25; }
 
     .el-fire  { animation-delay: -0.6s; }
@@ -190,47 +190,21 @@
         0 0 90px 45px rgba(0,102,255,0.14);
     }
 
-    /* ── gesture display ── */
-    #gesture-display {
+    .orb-label {
       position: absolute;
-      bottom: 0;
+      top: 100%;
       left: 50%;
       transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      padding-bottom: 52px;
+      margin-top: 10px;
+      font-size: 0.66rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      white-space: nowrap;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.6s ease;
-      cursor: pointer;
+      transition: opacity 0.35s ease;
     }
-    #gesture-display.visible {
-      opacity: 1;
-      pointer-events: all;
-    }
-
-    #gesture-svg svg {
-      width: min(120px, 32vw);
-      height: auto;
-      display: block;
-      filter: drop-shadow(0 0 8px currentColor);
-    }
-
-    #gesture-label {
-      font-size: 0.66rem;
-      letter-spacing: 0.26em;
-      text-transform: uppercase;
-      opacity: 0.48;
-    }
-
-    #tap-hint {
-      font-size: 0.58rem;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      opacity: 0.28;
-    }
+    .orb-float.is-active .orb-label { opacity: 0.62; }
 
     /* ── HUD ── */
     #hud {
@@ -302,30 +276,29 @@
 
   <div id="start-screen">
 
-    <p id="instruction">choose your element</p>
+    <p id="instruction">tap your element</p>
 
     <div id="orb-stage">
       <div class="orb-float float-water">
         <div class="el-circle el-water" data-element="water"><span>↑</span></div>
+        <p class="orb-label">👌 Water 수</p>
       </div>
       <div class="orb-float float-metal">
         <div class="el-circle el-metal" data-element="metal"><span>←</span></div>
+        <p class="orb-label">✌️ Metal 금</p>
       </div>
       <div class="orb-float float-earth">
         <div class="el-circle el-earth" data-element="earth"><span>⊕</span></div>
+        <p class="orb-label">✊ Earth 토</p>
       </div>
       <div class="orb-float float-wood">
         <div class="el-circle el-wood" data-element="wood"><span>→</span></div>
+        <p class="orb-label">✋ Wood 목</p>
       </div>
       <div class="orb-float float-fire">
         <div class="el-circle el-fire" data-element="fire"><span>↓</span></div>
+        <p class="orb-label">☝️ Fire 화</p>
       </div>
-    </div>
-
-    <div id="gesture-display">
-      <div id="gesture-svg"></div>
-      <p id="gesture-label"></p>
-      <p id="tap-hint">tap to enter</p>
     </div>
 
   </div>
