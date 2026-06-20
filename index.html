@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Uncanny Grove</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      overflow: hidden;
+      font-family: system-ui, sans-serif;
+      color: #fff;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+    }
+
+    #camera-feed {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+    }
+
+    /* ── start screen ── */
+    #start-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      background: rgba(0, 0, 0, 0.65);
+      padding: 32px;
+      text-align: center;
+    }
+
+    /* ── cardinal grid wrapper with cross lines ── */
+    #grid-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #grid-wrap::before {
+      content: '';
+      position: absolute;
+      left: 18%; right: 18%;
+      top: 50%; height: 1px;
+      background: rgba(255,255,255,0.10);
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+    #grid-wrap::after {
+      content: '';
+      position: absolute;
+      top: 18%; bottom: 18%;
+      left: 50%; width: 1px;
+      background: rgba(255,255,255,0.10);
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
+    /* ── element grid ── */
+    #element-grid {
+      display: grid;
+      grid-template-columns: repeat(3, min(88px, 26vw));
+      grid-template-rows: repeat(3, min(88px, 26vw));
+      gap: min(12px, 3vw);
+      place-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* cardinal placement */
+    .el-water { grid-column: 2; grid-row: 1; }
+    .el-metal { grid-column: 1; grid-row: 2; }
+    .el-earth { grid-column: 2; grid-row: 2; }
+    .el-wood  { grid-column: 3; grid-row: 2; }
+    .el-fire  { grid-column: 2; grid-row: 3; }
+
+    /* ── ambient orb ── */
+    @keyframes orb-pulse {
+      0%, 100% { opacity: 0.82; }
+      50%       { opacity: 1.00; }
+    }
+
+    .el-circle {
+      width: min(72px, 21vw);
+      height: min(72px, 21vw);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: orb-pulse 3.5s ease-in-out infinite;
+      transition: transform 0.25s ease, filter 0.25s ease;
+    }
+    .el-circle:hover  { transform: scale(1.18); filter: brightness(1.25); }
+    .el-circle.active { transform: scale(1.14); filter: brightness(1.45); }
+    .el-circle:hover, .el-circle.active { animation-play-state: paused; }
+
+    .el-fire   { animation-delay: -0.6s; }
+    .el-earth  { animation-delay: -1.2s; }
+    .el-metal  { animation-delay: -1.8s; }
+    .el-water  { animation-delay: -2.4s; }
+
+    /* direction symbol inside orb */
+    .el-circle span {
+      font-size: min(1.3rem, 4.5vw);
+      font-weight: 100;
+      color: rgba(255,255,255,0.70);
+      line-height: 1;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    /* ambient glow per element — white core, color bloom */
+    .el-wood {
+      background: radial-gradient(circle at 50% 45%,
+        rgba(255,255,255,1.00)  0%,
+        rgba(120,255,150,0.92) 16%,
+        rgba(0,204,68,0.68)    40%,
+        rgba(0,204,68,0.08)    65%,
+        rgba(0,204,68,0)       78%);
+      box-shadow:
+        0 0 8px  4px  rgba(0,204,68,1.00),
+        0 0 22px 11px rgba(0,204,68,0.68),
+        0 0 50px 25px rgba(0,204,68,0.38),
+        0 0 90px 45px rgba(0,204,68,0.14);
+    }
+    .el-fire {
+      background: radial-gradient(circle at 50% 45%,
+        rgba(255,255,255,1.00)  0%,
+        rgba(255,140,90,0.92)  16%,
+        rgba(255,34,0,0.68)    40%,
+        rgba(255,34,0,0.08)    65%,
+        rgba(255,34,0,0)       78%);
+      box-shadow:
+        0 0 8px  4px  rgba(255,34,0,1.00),
+        0 0 22px 11px rgba(255,34,0,0.68),
+        0 0 50px 25px rgba(255,34,0,0.38),
+        0 0 90px 45px rgba(255,34,0,0.14);
+    }
+    .el-earth {
+      background: radial-gradient(circle at 50% 45%,
+        rgba(255,255,255,1.00)  0%,
+        rgba(255,245,100,0.92) 16%,
+        rgba(255,204,0,0.68)   40%,
+        rgba(255,204,0,0.08)   65%,
+        rgba(255,204,0,0)      78%);
+      box-shadow:
+        0 0 8px  4px  rgba(255,204,0,1.00),
+        0 0 22px 11px rgba(255,204,0,0.68),
+        0 0 50px 25px rgba(255,204,0,0.38),
+        0 0 90px 45px rgba(255,204,0,0.14);
+    }
+    .el-metal {
+      background: radial-gradient(circle at 50% 45%,
+        rgba(255,255,255,1.00)  0%,
+        rgba(220,220,220,0.92) 16%,
+        rgba(180,180,180,0.68) 40%,
+        rgba(180,180,180,0.08) 65%,
+        rgba(180,180,180,0)    78%);
+      box-shadow:
+        0 0 8px  4px  rgba(200,200,200,1.00),
+        0 0 22px 11px rgba(200,200,200,0.68),
+        0 0 50px 25px rgba(200,200,200,0.38),
+        0 0 90px 45px rgba(200,200,200,0.14);
+    }
+    .el-water {
+      background: radial-gradient(circle at 50% 45%,
+        rgba(255,255,255,1.00)  0%,
+        rgba(90,168,255,0.92)  16%,
+        rgba(0,102,255,0.68)   40%,
+        rgba(0,102,255,0.08)   65%,
+        rgba(0,102,255,0)      78%);
+      box-shadow:
+        0 0 8px  4px  rgba(0,102,255,1.00),
+        0 0 22px 11px rgba(0,102,255,0.68),
+        0 0 50px 25px rgba(0,102,255,0.38),
+        0 0 90px 45px rgba(0,102,255,0.14);
+    }
+
+    /* ── gesture panel ── */
+    #gesture-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      min-height: 80px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    #gesture-panel.visible { opacity: 1; }
+
+    #gesture-emoji {
+      font-size: 3.2rem;
+      line-height: 1;
+    }
+    #gesture-name {
+      font-size: 0.82rem;
+      font-weight: 300;
+      letter-spacing: 0.14em;
+      opacity: 0.85;
+    }
+
+    /* ── enter button ── */
+    #start-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff;
+      padding: 12px 38px;
+      font-size: 0.82rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: background 0.2s;
+    }
+    #start-btn:hover { background: rgba(255,255,255,0.08); }
+
+    /* ── HUD ── */
+    #hud {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      display: none;
+    }
+
+    #hint {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      opacity: 0.75;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    #palm-ring {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      transform: translate(-50%, -50%);
+      display: none;
+      pointer-events: none;
+    }
+
+    #palm-ring svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    #palm-ring circle.track {
+      fill: none;
+      stroke: rgba(255,255,255,0.2);
+      stroke-width: 3;
+    }
+
+    #palm-ring circle.progress {
+      fill: none;
+      stroke: #fff;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-dasharray: 220;
+      stroke-dashoffset: 220;
+      transition: stroke-dashoffset 0.05s linear;
+    }
+
+    #status {
+      position: absolute;
+      top: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      opacity: 0.5;
+    }
+  </style>
+  <script type="module" crossorigin src="/uncanny-grove/assets/index-CdxmvQ_R.js"></script>
+</head>
+<body>
+
+  <video id="camera-feed" playsinline autoplay muted></video>
+  <canvas id="canvas"></canvas>
+
+  <div id="start-screen">
+
+    <div id="grid-wrap">
+      <div id="element-grid">
+        <div class="el-circle el-water" data-element="water"><span>↑</span></div>
+        <div class="el-circle el-metal" data-element="metal"><span>←</span></div>
+        <div class="el-circle el-earth" data-element="earth"><span>⊕</span></div>
+        <div class="el-circle el-wood"  data-element="wood"><span>→</span></div>
+        <div class="el-circle el-fire"  data-element="fire"><span>↓</span></div>
+      </div>
+    </div>
+
+    <div id="gesture-panel">
+      <div id="gesture-emoji"></div>
+      <div id="gesture-name"></div>
+    </div>
+
+    <button id="start-btn">Enter</button>
+
+  </div>
+
+  <div id="hud">
+    <div id="status"></div>
+    <div id="hint">Show a gesture</div>
+    <div id="palm-ring">
+      <svg viewBox="0 0 80 80">
+        <circle class="track" cx="40" cy="40" r="35" />
+        <circle class="progress" cx="40" cy="40" r="35" />
+      </svg>
+    </div>
+  </div>
+
+</body>
+</html>
