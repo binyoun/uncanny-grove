@@ -85,124 +85,55 @@ const ELEMENT_INFO = {
   water: { label: 'Water 수', emoji: '👌', color: '#0066ff' },
 }
 
-// ── Particle gesture canvas ───────────────────────────────────
-const gCanvas      = document.getElementById('gesture-canvas')
-const gCtx         = gCanvas.getContext('2d')
-const gDisplay     = document.getElementById('gesture-display')
-const gLabel       = document.getElementById('gesture-label')
-const landProgress = document.querySelector('#land-ring .lr-progress')
-const instruction  = document.getElementById('instruction')
-const LAND_CIRC    = 2 * Math.PI * 30
-const HOLD_MS      = 2000
-
-function _ellipse(cx, cy, rx, ry, n) {
-  const pts = []
-  for (let i = 0; i < n; i++) {
-    const a = Math.random() * Math.PI * 2
-    const r = Math.sqrt(Math.random())
-    pts.push([cx + rx * r * Math.cos(a), cy + ry * r * Math.sin(a)])
-  }
-  return pts
-}
-function _rect(x, y, w, h, n) {
-  const pts = []
-  for (let i = 0; i < n; i++) pts.push([x + Math.random() * w, y + Math.random() * h])
-  return pts
-}
-function _ring(cx, cy, r, spread, n) {
-  const pts = []
-  for (let i = 0; i < n; i++) {
-    const a = Math.random() * Math.PI * 2
-    const rr = r + (Math.random() - 0.5) * spread * 2
-    pts.push([cx + rr * Math.cos(a), cy + rr * Math.sin(a)])
-  }
-  return pts
-}
-
-// Point clouds in 100×120 coordinate space
-const RAW = {
-  earth: [
-    ..._ellipse(50, 82, 32, 28, 60),
-    ..._rect(20, 54, 60, 22, 38),
-    ..._ellipse(50, 54, 28, 10, 16),
-    ..._ellipse(16, 76, 10, 16, 18),
-  ],
-  fire: [
-    ..._ellipse(56, 104, 26, 14, 38),
-    ..._rect(46, 18, 16, 84, 40),
-    ..._ellipse(54, 16,  9,  7, 12),
-    ..._rect(62, 80, 22, 18, 18),
-  ],
-  wood: [
-    ..._ellipse(48, 108, 34, 10, 36),
-    ..._rect( 8,  72, 14, 36, 14),
-    ..._rect(22,  12, 13, 96, 22),
-    ..._rect(36,   6, 13,102, 24),
-    ..._rect(50,  10, 13, 98, 22),
-    ..._rect(63,  22, 12, 86, 18),
-  ],
-  metal: [
-    ..._ellipse(50, 108, 30, 10, 34),
-    ..._rect(38,  84, 38, 18, 22),
-    ..._rect(24,  12, 15, 90, 26),
-    ..._rect(56,   8, 15, 92, 26),
-  ],
-  water: [
-    ..._ring(34, 82, 22, 5, 42),
-    ..._rect(58, 16, 13, 64, 22),
-    ..._rect(72, 22, 12, 60, 18),
-    ..._rect(84, 30, 11, 52, 14),
-    ..._ellipse(62, 106, 22, 10, 26),
-  ],
+// ── Gesture SVG outlines ──────────────────────────────────────
+const GESTURE_SVG = {
+  earth: `<svg viewBox="0 0 56 72" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="8" y="24" width="40" height="40" rx="9"/>
+    <path d="M8,38 C3,30 5,20 13,17 Q18,15 20,21"/>
+    <line x1="20" y1="24" x2="20" y2="29"/>
+    <line x1="29" y1="24" x2="29" y2="29"/>
+    <line x1="38" y1="24" x2="38" y2="29"/>
+  </svg>`,
+  fire: `<svg viewBox="0 0 56 72" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="8" y="40" width="40" height="28" rx="9"/>
+    <rect x="20" y="6" width="16" height="40" rx="8"/>
+    <path d="M13,40 Q13,35 18,34"/>
+    <path d="M43,40 Q43,35 38,34"/>
+  </svg>`,
+  wood: `<svg viewBox="0 0 56 72" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="6" y="50" width="44" height="18" rx="7"/>
+    <rect x="2"  y="38" width="10" height="20" rx="5"/>
+    <rect x="12" y="8"  width="9"  height="46" rx="4.5"/>
+    <rect x="22" y="2"  width="9"  height="52" rx="4.5"/>
+    <rect x="32" y="6"  width="9"  height="48" rx="4.5"/>
+    <rect x="42" y="14" width="8"  height="40" rx="4"/>
+  </svg>`,
+  metal: `<svg viewBox="0 0 56 72" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="8" y="42" width="40" height="26" rx="9"/>
+    <path d="M34,42 Q40,36 44,42"/>
+    <rect x="10" y="6"  width="14" height="42" rx="7"/>
+    <rect x="32" y="4"  width="14" height="44" rx="7"/>
+  </svg>`,
+  water: `<svg viewBox="0 0 56 72" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="20" cy="50" r="14"/>
+    <rect x="34" y="8"  width="10" height="42" rx="5"/>
+    <rect x="45" y="12" width="9"  height="38" rx="4.5"/>
+    <path d="M8,50 Q8,66 20,68 L46,68"/>
+  </svg>`,
 }
 
-const PARTICLES = {}
-Object.entries(RAW).forEach(([el, pts]) => {
-  PARTICLES[el] = pts.map(([x, y]) => ({
-    x, y,
-    phase: Math.random() * Math.PI * 2,
-    amp:   0.4 + Math.random() * 1.1,
-    speed: 0.28 + Math.random() * 0.44,
-  }))
-})
-
-let driftRAF      = null
+const gDisplay    = document.getElementById('gesture-display')
+const gSvgWrap    = document.getElementById('gesture-svg')
+const gLabel      = document.getElementById('gesture-label')
+const instruction = document.getElementById('instruction')
 let activeElement = null
-
-function drawParticles(element, t) {
-  gCtx.clearRect(0, 0, gCanvas.width, gCanvas.height)
-  const color = ELEMENT_INFO[element].color
-  gCtx.shadowBlur  = 10
-  gCtx.shadowColor = color
-  gCtx.fillStyle   = color
-  for (const p of PARTICLES[element]) {
-    const px = p.x + p.amp * Math.sin(t * p.speed + p.phase)
-    const py = p.y + p.amp * Math.cos(t * p.speed * 0.7 + p.phase + 0.5)
-    gCtx.beginPath()
-    gCtx.arc(px, py, 1.3, 0, Math.PI * 2)
-    gCtx.fill()
-  }
-}
-
-function startDrift(element) {
-  activeElement = element
-  const tick = () => {
-    drawParticles(element, performance.now() * 0.001)
-    driftRAF = requestAnimationFrame(tick)
-  }
-  driftRAF = requestAnimationFrame(tick)
-}
-
-function stopDrift() {
-  cancelAnimationFrame(driftRAF)
-  driftRAF = null
-  gCtx.clearRect(0, 0, gCanvas.width, gCanvas.height)
-}
+let arStarted     = false
 
 // ── Orb click → show gesture ──────────────────────────────────
 document.querySelectorAll('.el-circle').forEach((el) => {
   el.addEventListener('click', () => {
     const element = el.dataset.element
+    activeElement = element
 
     document.querySelectorAll('.el-circle').forEach(c => {
       c.classList.remove('active')
@@ -212,47 +143,20 @@ document.querySelectorAll('.el-circle').forEach((el) => {
     el.classList.add('active')
 
     instruction.classList.add('hidden')
-    cancelHold()
-    stopDrift()
-
+    gSvgWrap.innerHTML = GESTURE_SVG[element]
+    gSvgWrap.querySelector('svg').style.color = ELEMENT_INFO[element].color
     gLabel.textContent = ELEMENT_INFO[element].label
-    landProgress.style.stroke = ELEMENT_INFO[element].color
-    landProgress.style.strokeDashoffset = LAND_CIRC
-
     gDisplay.classList.add('visible')
-    startDrift(element)
   })
 })
 
-// ── Hold-to-enter ─────────────────────────────────────────────
-const holdZone = document.getElementById('hold-zone')
-let holdStart  = null
-let holdRAF    = null
-let arStarted  = false
-
-function cancelHold() {
-  if (holdStart === null) return
-  holdStart = null
-  cancelAnimationFrame(holdRAF)
-  holdRAF = null
-  landProgress.style.strokeDashoffset = LAND_CIRC
-}
-
-function tickHold() {
-  const progress = Math.min((performance.now() - holdStart) / HOLD_MS, 1)
-  landProgress.style.strokeDashoffset = LAND_CIRC * (1 - progress)
-  if (progress < 1) {
-    holdRAF = requestAnimationFrame(tickHold)
-  } else {
-    holdStart = null
-    if (!arStarted) { arStarted = true; startAR() }
-  }
-}
-
-holdZone.addEventListener('pointerdown',   (e) => { e.preventDefault(); if (!arStarted && activeElement) { holdStart = performance.now(); holdRAF = requestAnimationFrame(tickHold) } })
-holdZone.addEventListener('pointerup',     cancelHold)
-holdZone.addEventListener('pointerleave',  cancelHold)
-holdZone.addEventListener('pointercancel', cancelHold)
+// ── Tap anywhere (not orb) → enter AR ────────────────────────
+document.getElementById('start-screen').addEventListener('click', (e) => {
+  if (!activeElement || arStarted) return
+  if (e.target.closest('.el-circle')) return
+  arStarted = true
+  startAR()
+})
 
 // ── AR modules ────────────────────────────────────────────────
 const tracker   = new HandTracker()
